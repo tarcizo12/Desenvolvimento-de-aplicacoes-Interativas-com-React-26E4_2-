@@ -1,0 +1,278 @@
+# =========================================================
+# JAVA
+# =========================================================
+*.class
+*.log
+hs_err_pid*
+replay_pid*
+java_pid*.hprof
+*.hprof
+
+# =========================================================
+# MAVEN
+# =========================================================
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+.flattened-pom.xml
+dependency-reduced-pom.xml
+
+# =========================================================
+# SPRING BOOT
+# =========================================================
+.spring-boot-devtools.properties
+
+# Arquivos de configuração local específicos
+application-local.properties
+application-local.yml
+application-local.yaml
+application-*.local.properties
+application-*.local.yml
+application-*.local.yaml
+
+# =========================================================
+# INTELLIJ IDEA
+# =========================================================
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# =========================================================
+# ECLIPSE / SPRING TOOL SUITE
+# =========================================================
+.classpath
+.project
+.settings/
+.factorypath
+.springBeans
+.sts4-cache/
+bin/
+
+# =========================================================
+# VISUAL STUDIO CODE
+# =========================================================
+.vscode/
+*.code-workspace
+
+# =========================================================
+# NETBEANS
+# =========================================================
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# =========================================================
+# GRADLE
+# =========================================================
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# =========================================================
+# NODE.JS / NPM
+# =========================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Logs de gerenciadores de pacotes
+*.npm
+*.pid
+*.seed
+
+# Diretórios temporários do npm
+.npm/
+.eslintcache
+.stylelintcache
+
+# Cache do Corepack
+.corepack/
+
+# =========================================================
+# VITE
+# =========================================================
+# Build de produção padrão
+dist/
+
+# Cache de desenvolvimento e otimização do Vite
+node_modules/.vite/
+.vite/
+
+# Arquivos de build adicionais
+dist-ssr/
+*.local
+
+# =========================================================
+# TYPESCRIPT / JAVASCRIPT
+# =========================================================
+*.tsbuildinfo
+.next/
+.nuxt/
+.svelte-kit/
+.angular/
+.parcel-cache/
+.turbo/
+.vercel/
+.netlify/
+.output/
+.vuepress/dist/
+.temp/
+
+# =========================================================
+# FRAMEWORKS FRONT-END / GERADORES
+# =========================================================
+# Storybook
+storybook-static/
+
+# Astro
+.astro/
+
+# Docusaurus
+.docusaurus/
+
+# =========================================================
+# TESTES / COBERTURA
+# =========================================================
+coverage/
+.nyc_output/
+*.lcov
+*.exec
+test-results/
+playwright-report/
+blob-report/
+cypress/videos/
+cypress/screenshots/
+junit.xml
+
+# =========================================================
+# LINT / FORMATADORES
+# =========================================================
+.eslintcache
+.stylelintcache
+.prettier-cache
+
+# =========================================================
+# LOGS
+# =========================================================
+logs/
+log/
+*.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# =========================================================
+# ARQUIVOS TEMPORÁRIOS
+# =========================================================
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.old
+*~
+*.orig
+*.rej
+
+# =========================================================
+# SISTEMA OPERACIONAL
+# =========================================================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100/
+.Trashes/
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# =========================================================
+# VARIÁVEIS DE AMBIENTE / SEGREDOS
+# =========================================================
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+
+# Chaves e certificados privados
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+secrets/
+.secret/
+
+# =========================================================
+# BANCO DE DADOS LOCAL
+# =========================================================
+*.db
+*.sqlite
+*.sqlite3
+*.mdb
+*.accdb
+*.h2.db
+*.mv.db
+*.trace.db
+
+# =========================================================
+# DOCKER
+# =========================================================
+docker-compose.override.yml
+docker-compose.*.override.yml
+
+# Não ignorar:
+# Dockerfile
+# compose.yml
+# compose.yaml
+# docker-compose.yml
+# docker-compose.yaml
+
+# =========================================================
+# ARQUIVOS DE IDE / FERRAMENTAS
+# =========================================================
+.history/
+.projectile
+.direnv/
+
+# =========================================================
+# BACKUP / ARQUIVOS GRANDES GERADOS
+# =========================================================
+*.dump
+*.bak.sql
+*.backup
+*.cache
+
+# =========================================================
+# DOCUMENTAÇÃO GERADA
+# =========================================================
+site/
+
+# =========================================================
+# INFRAESTRUTURA / DEPLOY LOCAL
+# =========================================================
+.terraform/
+terraform.tfstate
+terraform.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.helmignore.tmp
