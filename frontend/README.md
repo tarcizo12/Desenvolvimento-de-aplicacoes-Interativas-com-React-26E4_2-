@@ -19,7 +19,7 @@ npm install
 npm run dev
 ```
 
-A aplicação abre em `http://localhost:5173`.
+A aplicação abre em `http://localhost:8082`.
 
 ## Comandos disponíveis
 
@@ -34,4 +34,4 @@ A aplicação abre em `http://localhost:5173`.
 
 - **`npm` bloqueado no PowerShell** (execução de scripts desabilitada): rode uma vez `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`, ou use `npm.cmd` no lugar de `npm`.
 - **`node` não reconhecido:** instale o Node.js LTS e abra um novo terminal.
-- **Porta 5173 em uso:** o Vite escolhe outra porta e mostra a nova URL no terminal.
+- **Porta em uso:** o Vite escolhe outra porta e mostra a nova URL no terminal.

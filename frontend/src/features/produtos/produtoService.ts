@@ -1,3 +1,4 @@
+
 import type { Produto, ProdutoInput } from './types'
 
 // Serviço com dados em memória, apenas para desenvolver as telas.
@@ -29,29 +30,37 @@ let produtos: Produto[] = [
 
 let proximoId = 3
 
-export async function listarProdutos(): Promise<Produto[]> {
-  return [...produtos].sort((a, b) => a.nome.localeCompare(b.nome))
-}
+export const listarProdutos = async (): Promise<Produto[]> =>
+  [...produtos].sort((a, b) => a.nome.localeCompare(b.nome))
 
-export async function obterProduto(id: number): Promise<Produto | undefined> {
-  return produtos.find((p) => p.id === id)
-}
+export const obterProduto = async (
+  id: number,
+): Promise<Produto | undefined> =>
+  produtos.find((p) => p.id === id)
 
-export async function incluirProduto(dados: ProdutoInput): Promise<Produto> {
+export const incluirProduto = async (
+  dados: ProdutoInput,
+): Promise<Produto> => {
   const novo = { ...dados, id: proximoId++ } as Produto
+
   produtos = [...produtos, novo]
+
   return novo
 }
 
-export async function alterarProduto(
+export const alterarProduto = async (
   id: number,
   dados: ProdutoInput,
-): Promise<Produto> {
+): Promise<Produto> => {
   const atualizado = { ...dados, id } as Produto
+
   produtos = produtos.map((p) => (p.id === id ? atualizado : p))
+
   return atualizado
 }
 
-export async function excluirProduto(id: number): Promise<void> {
+export const excluirProduto = async (
+  id: number,
+): Promise<void> => {
   produtos = produtos.filter((p) => p.id !== id)
 }

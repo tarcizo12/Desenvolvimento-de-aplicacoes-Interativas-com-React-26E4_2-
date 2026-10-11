@@ -9,10 +9,8 @@ Para manter o foco, o escopo foi reduzido ao núcleo do domínio:
 - **CRUD de Produto** (foco principal desta etapa): listar, cadastrar, editar e excluir.
 - **Categoria** e **Fornecedor**: entidades de apoio, usadas para classificar e associar cada produto (por exemplo, nos campos de seleção do formulário).
 
-Ficam fora desta etapa: `Usuario`, `Movimentacao`, `ItemMovimentacao` e `TipoMovimentacao`.
 
 ## Modelo de domínio
-
 ![Diagrama de entidades](diagrama-entidades.png)
 
 Pontos principais do modelo:
@@ -25,31 +23,23 @@ Pontos principais do modelo:
 
 > **Consequência para a interface:** o formulário de produto deve exibir campos diferentes conforme o tipo escolhido (validade e lote para perecível, garantia para não perecível).
 
-## Estrutura de pastas
+## Telas de concepção
 
-```text
-.
-├── docs/
-│   └── diagrama-entidades.png   # diagrama usado neste README
-├── frontend/                    # projeto React (Vite + TypeScript)
-└── README.md
-```
+### Tela 1
 
-## Como executar o front-end
+![Tela 1](tela-1.png)
 
-Pré-requisito: Node.js 20.19+ ou 22.12+.
+### Tela 2
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+![Tela 2](tela-2.png)
 
-A aplicação abre em `http://localhost:5173`.
+### Tela 3
+
+![Tela 3](tela-3.png)
 
 ## Back-end utilizado
 
-A interface consome a API da aplicação principal (projeto anterior):
+A interface consome a API da aplicação principal (projeto da disciplina anterior):
 
 - API: `http://localhost:8080`
 - Documentação (Swagger): `http://localhost:8080/swagger-ui.html`

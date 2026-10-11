@@ -1,13 +1,31 @@
-import type { Categoria } from "./type"
 
+import type { Categoria, CategoriaInput } from './type'
 
-// Dados de exemplo. Será substituído pela chamada à API.
-const categorias: Categoria[] = [
+let categorias: Categoria[] = [
   { id: 1, nome: 'Alimentos', descricao: 'Produtos alimentícios' },
   { id: 2, nome: 'Eletrônicos', descricao: 'Aparelhos e acessórios' },
   { id: 3, nome: 'Limpeza' },
 ]
 
-export async function listarCategorias(): Promise<Categoria[]> {
-  return [...categorias]
+let proximoId = 4
+
+export const listarCategorias = async (): Promise<Categoria[]> =>
+  [...categorias].sort((a, b) => a.nome.localeCompare(b.nome))
+
+export const incluirCategoria = async (
+  dados: CategoriaInput,
+): Promise<Categoria> => {
+  const existe = categorias.some(
+    (c) => c.nome.toLowerCase() === dados.nome.toLowerCase(),
+  )
+
+  if (existe) {
+    throw new Error('Já existe uma categoria com esse nome.')
+  }
+
+  const nova: Categoria = { ...dados, id: proximoId++ }
+
+  categorias = [...categorias, nova]
+
+  return nova
 }

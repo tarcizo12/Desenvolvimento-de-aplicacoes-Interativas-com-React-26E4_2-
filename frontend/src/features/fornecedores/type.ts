@@ -6,3 +6,5 @@ export interface Fornecedor {
   email?: string
   endereco?: string
 }
+
+export type FornecedorInput = Omit<Fornecedor, 'id'>

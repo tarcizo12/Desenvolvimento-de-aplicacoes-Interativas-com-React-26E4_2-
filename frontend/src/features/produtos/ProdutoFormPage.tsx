@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -7,12 +8,11 @@ import {
   obterProduto,
 } from './produtoService'
 import type { ProdutoInput, TipoProduto } from './types'
+import { listarCategorias } from '../categorias/categoriaService'
 import type { Categoria } from '../categorias/type'
+import { listarFornecedores } from '../fornecedores/fornecedorService'
 import type { Fornecedor } from '../fornecedores/type'
-import { listarCategorias } from './categoriaService'
-import { listarFornecedores } from './fornecedorService'
 
-// Estado do formulário: todos os campos como texto, como vêm dos inputs.
 interface FormState {
   tipoProduto: TipoProduto
   nome: string
@@ -39,7 +39,7 @@ const estadoInicial: FormState = {
   garantiaMeses: '',
 }
 
-export default function ProdutoFormPage() {
+const ProdutoFormPage = () => {
   const { id } = useParams()
   const editando = id !== undefined
   const navigate = useNavigate()
@@ -56,11 +56,13 @@ export default function ProdutoFormPage() {
 
   useEffect(() => {
     if (id === undefined) return
+
     obterProduto(Number(id)).then((produto) => {
       if (!produto) {
         setErro('Produto não encontrado.')
         return
       }
+
       setForm({
         tipoProduto: produto.tipoProduto,
         nome: produto.nome,
@@ -70,8 +72,13 @@ export default function ProdutoFormPage() {
         categoriaId: String(produto.categoriaId),
         fornecedorId: String(produto.fornecedorId),
         dataValidade:
-          produto.tipoProduto === 'PERECIVEL' ? produto.dataValidade : '',
-        lote: produto.tipoProduto === 'PERECIVEL' ? produto.lote : '',
+          produto.tipoProduto === 'PERECIVEL'
+            ? produto.dataValidade
+            : '',
+        lote:
+          produto.tipoProduto === 'PERECIVEL'
+            ? produto.lote
+            : '',
         garantiaMeses:
           produto.tipoProduto === 'NAO_PERECIVEL'
             ? String(produto.garantiaMeses)
@@ -80,11 +87,14 @@ export default function ProdutoFormPage() {
     })
   }, [id])
 
-  function atualizar<K extends keyof FormState>(campo: K, valor: FormState[K]) {
+  const atualizar = <K extends keyof FormState>(
+    campo: K,
+    valor: FormState[K],
+  ) => {
     setForm((atual) => ({ ...atual, [campo]: valor }))
   }
 
-  async function handleSubmit(evento: FormEvent) {
+  const handleSubmit = async (evento: FormEvent) => {
     evento.preventDefault()
     setErro('')
 
@@ -116,6 +126,7 @@ export default function ProdutoFormPage() {
     } else {
       await incluirProduto(dados)
     }
+
     navigate('/produtos')
   }
 
@@ -182,7 +193,9 @@ export default function ProdutoFormPage() {
             min="0"
             step="1"
             value={form.quantidadeEstoque}
-            onChange={(e) => atualizar('quantidadeEstoque', e.target.value)}
+            onChange={(e) =>
+              atualizar('quantidadeEstoque', e.target.value)
+            }
           />
         </label>
 
@@ -226,9 +239,12 @@ export default function ProdutoFormPage() {
                 type="date"
                 required
                 value={form.dataValidade}
-                onChange={(e) => atualizar('dataValidade', e.target.value)}
+                onChange={(e) =>
+                  atualizar('dataValidade', e.target.value)
+                }
               />
             </label>
+
             <label>
               Lote
               <input
@@ -249,13 +265,16 @@ export default function ProdutoFormPage() {
               min="0"
               step="1"
               value={form.garantiaMeses}
-              onChange={(e) => atualizar('garantiaMeses', e.target.value)}
+              onChange={(e) =>
+                atualizar('garantiaMeses', e.target.value)
+              }
             />
           </label>
         )}
 
         <div className="actions">
           <button type="submit">Salvar</button>
+
           <Link to="/produtos" className="button secondary">
             Cancelar
           </Link>
@@ -264,3 +283,5 @@ export default function ProdutoFormPage() {
     </section>
   )
 }
+
+export default ProdutoFormPage

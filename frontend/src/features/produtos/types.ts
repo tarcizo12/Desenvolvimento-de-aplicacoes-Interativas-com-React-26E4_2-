@@ -23,7 +23,6 @@ export interface ProdutoNaoPerecivel extends ProdutoBase {
 
 export type Produto = ProdutoPerecivel | ProdutoNaoPerecivel
 
-// Dados enviados ao criar ou alterar um produto (sem o id).
 export type ProdutoInput =
   | Omit<ProdutoPerecivel, 'id'>
   | Omit<ProdutoNaoPerecivel, 'id'>

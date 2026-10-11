@@ -23,13 +23,25 @@ header h1 {
   font-size: 1.1rem;
 }
 
+header nav {
+  display: flex;
+  gap: 1.25rem;
+}
+
 header a {
   color: #d1d5db;
   text-decoration: none;
+  padding-bottom: 0.2rem;
+  border-bottom: 2px solid transparent;
 }
 
 header a:hover {
   color: #fff;
+}
+
+header a.active {
+  color: #fff;
+  border-bottom-color: #fff;
 }
 
 main {

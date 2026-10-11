@@ -1,10 +1,11 @@
+
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { listarProdutos, excluirProduto } from './produtoService'
 import { formatarMoeda } from '../../utils/format'
 import type { Produto } from './types'
 
-export default function ProdutoListPage() {
+const ProdutoListPage = () => {
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [carregando, setCarregando] = useState(true)
 
@@ -15,16 +16,21 @@ export default function ProdutoListPage() {
     })
   }, [])
 
-  async function handleExcluir(produto: Produto) {
+  const handleExcluir = (produto: Produto) => {
     if (!window.confirm(`Excluir o produto "${produto.nome}"?`)) return
-    await excluirProduto(produto.id)
-    setProdutos((atual) => atual.filter((p) => p.id !== produto.id))
+
+    excluirProduto(produto.id)
+
+    setProdutos((atual) =>
+      atual.filter((p) => p.id !== produto.id),
+    )
   }
 
   return (
     <section>
       <div className="page-title">
         <h2>Produtos</h2>
+
         <Link to="/produtos/novo" className="button">
           Novo produto
         </Link>
@@ -45,17 +51,22 @@ export default function ProdutoListPage() {
               <th>Ações</th>
             </tr>
           </thead>
+
           <tbody>
             {produtos.map((produto) => (
               <tr key={produto.id}>
                 <td>{produto.nome}</td>
+
                 <td>
                   {produto.tipoProduto === 'PERECIVEL'
                     ? 'Perecível'
                     : 'Não perecível'}
                 </td>
+
                 <td>{formatarMoeda(produto.preco)}</td>
+
                 <td>{produto.quantidadeEstoque}</td>
+
                 <td>
                   <div className="actions">
                     <Link
@@ -64,6 +75,7 @@ export default function ProdutoListPage() {
                     >
                       Editar
                     </Link>
+
                     <button
                       type="button"
                       className="danger"
@@ -81,3 +93,5 @@ export default function ProdutoListPage() {
     </section>
   )
 }
+
+export default ProdutoListPage
