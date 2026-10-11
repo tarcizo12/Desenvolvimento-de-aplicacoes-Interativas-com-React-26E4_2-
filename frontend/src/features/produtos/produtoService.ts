@@ -1,8 +1,7 @@
 
 import type { Produto, ProdutoInput } from './types'
 
-// Serviço com dados em memória, apenas para desenvolver as telas.
-// Quando a API for integrada, só este arquivo precisa mudar.
+
 let produtos: Produto[] = [
   {
     id: 1,
