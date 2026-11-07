@@ -1,68 +1,131 @@
 # Gerenciador de Estoque
 
-Aplicação de gerenciamento de estoque com API Spring Boot, MySQL e interface React + TypeScript.
+## 1. Título do projeto
 
-## Executar no Windows
+**Gerenciador de Estoque** — aplicação web para organizar produtos, categorias e fornecedores.
 
-1. Instale Docker Desktop e Node.js 20.19+ (ou 22.12+).
-2. Execute [`iniciar-backend.bat`](./iniciar-backend.bat) e aguarde a mensagem de API pronta.
-3. Execute [`iniciar-frontend.bat`](./iniciar-frontend.bat).
-4. Abra `http://localhost:8082`. O backend fica em `http://localhost:8080`; o Swagger, em `http://localhost:8080/swagger-ui.html`.
+## 2. Objetivo do projeto
 
-O script do backend sobe somente o MySQL de desenvolvimento e a API. A importação de fornecedores CSV é processada diretamente pela API. Os dados do banco ficam nos volumes Docker. O frontend roda localmente com Vite, sem container.
+O projeto oferece uma interface para manter um catálogo de produtos e suas informações de estoque, relacionando cada produto a uma categoria e a um fornecedor. Também permite cadastrar fornecedores individualmente ou importar seus dados a partir de um arquivo CSV. A API valida e persiste os registros em MySQL.
 
-Para encerrar o backend, no diretório `backend`, execute `docker compose down`. Para encerrar o frontend, use `Ctrl+C` na janela do servidor.
+## 3. Features implementadas
 
-## Funcionalidades
+- **Produtos:** listar, cadastrar, editar e excluir produtos. O modelo diferencia produtos perecíveis (validade e lote) e não perecíveis (meses de garantia).
+- **Categorias:** listar e cadastrar categorias para classificar os produtos.
+- **Fornecedores:** listar e cadastrar fornecedores, além de importar CSV de forma síncrona. A resposta da API informa quantos registros foram criados e quantos duplicados foram ignorados.
+- **Interface reativa:** formulários controlados, tabelas, confirmação de exclusão e estados visíveis de carregamento, sucesso e erro.
+- **Navegação:** páginas distintas com React Router. O acesso inicial por nome é uma proteção demonstrativa do frontend, não uma autenticação.
+- **Persistência e validação:** API REST em Spring Boot, regras de domínio e persistência relacional em MySQL.
 
-Para manter o foco, o escopo foi reduzido ao núcleo do domínio:
+> A rota de entrada demonstrativa não autentica o usuário e não protege os endpoints da API.
 
-- **Produtos**: listar, cadastrar, editar e excluir por meio da API persistida.
-- **Categorias**: listar e cadastrar categorias usadas pelos produtos.
-- **Fornecedores**: listar, cadastrar e importar CSV de forma síncrona.
-- **Interface React**: React Router, TanStack Query, Context API para a sessão demonstrativa, formulários controlados e estados de carregamento/erro.
+## 4. Tecnologias utilizadas
 
-O acesso pelo formulário de entrada é apenas uma demonstração de rota protegida no navegador. **Não é autenticação e não protege os endpoints da API.**
+- **Frontend:** React 19, TypeScript, Vite, React Router, TanStack Query, Material UI, Fetch API e CSS.
+- **Backend:** Java 21, Spring Boot, Spring Web, Spring Validation, Spring Data JPA, OpenFeign e Springdoc OpenAPI.
+- **Dados:** MySQL 8.4.
+- **Ambiente conteinerizado:** Docker, Docker Compose, Node.js 22 e Nginx para servir o build estático do frontend.
+- **Testes:** JUnit 5, Mockito e Spring Boot Test.
 
-O frontend usa `http://localhost:8080/com/api` como endereço padrão da API. Para outro endereço, crie `frontend/.env.local` com:
+## 5. Instruções de execução
 
-```env
-VITE_API_BASE_URL=http://localhost:8080/com/api
+### Requisitos
+
+- Docker instalado e em execução. No Windows, use o Docker Desktop; no Linux, Docker Engine e o plugin Docker Compose; no macOS, Docker Desktop.
+- Git, para clonar o repositório.
+- Não é necessário instalar Node.js ou Java no computador para a execução via scripts Docker. Para desenvolvimento local sem Docker, veja os READMEs de [backend](./backend/README.md) e [frontend](./frontend/README.md).
+
+### Subir a aplicação
+
+1. Clone o repositório:
+
+   ```powershell
+   git clone https://github.com/tarcizo12/Desenvolvimento-de-aplicacoes-Interativas-com-React-26E4_2-.git
+   cd Desenvolvimento-de-aplicacoes-Interativas-com-React-26E4_2-
+   ```
+
+2. Inicie o Docker Desktop e aguarde até que ele esteja pronto.
+3. Execute [`iniciar-backend.bat`](./iniciar-backend.bat). O script constrói e inicia a API e o MySQL de desenvolvimento.
+4. Execute [`iniciar-frontend.bat`](./iniciar-frontend.bat). O script constrói a imagem React/Nginx, inicia somente o frontend e abre o navegador.
+5. Acesse:
+   - Aplicação: [http://localhost:8082](http://localhost:8082)
+   - API: [http://localhost:8080](http://localhost:8080)
+   - Swagger: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+
+Cada parte possui sua própria configuração Compose: [`backend/docker-compose.yml`](./backend/docker-compose.yml) para API e bancos, e [`frontend/docker-compose.yml`](./frontend/docker-compose.yml) para a interface. Assim, é possível construir, iniciar ou atualizar uma parte sem recriar a outra. A primeira execução baixa as imagens-base e compila as aplicações, podendo levar alguns minutos. O frontend é servido em um container Nginx e chama a API em `http://localhost:8080/com/api`. Para usar outro endereço, defina `VITE_API_BASE_URL` antes de construir a imagem; essa variável é aplicada no build do frontend.
+
+### Linux e macOS
+
+Em sistemas sem suporte a arquivos `.bat`, execute os comandos Docker Compose separadamente, a partir da raiz do repositório. Inicie API e banco:
+
+```bash
+docker compose -f backend/docker-compose.yml up --build -d api
 ```
 
+O banco de desenvolvimento é iniciado automaticamente como dependência da API. Em seguida, construa e inicie somente o frontend:
 
-## Modelo de domínio
-![Diagrama de entidades](diagrama-entidades.png)
+```bash
+docker compose -f frontend/docker-compose.yml up --build -d
+```
 
-Pontos principais do modelo:
+O frontend pode iniciar independentemente, mas as operações de dados precisam da API em execução. Acompanhe os logs de cada parte com `docker compose -f backend/docker-compose.yml logs -f` ou `docker compose -f frontend/docker-compose.yml logs -f`. A aplicação fica disponível em `http://localhost:8082`.
 
-- `Produto` é uma classe abstrata, com dois tipos:
-  - `ProdutoPerecivel`: possui `dataValidade` e `lote`.
-  - `ProdutoNaoPerecivel`: possui `garantiaMeses`.
-- Uma `Categoria` possui vários produtos (1 para N).
-- Um `Fornecedor` fornece vários produtos (1 para N).
+### Encerrar ou recomeçar
 
-> **Consequência para a interface:** o formulário de produto deve exibir campos diferentes conforme o tipo escolhido (validade e lote para perecível, garantia para não perecível).
+Execute [`parar-aplicacao.bat`](./parar-aplicacao.bat) para encerrar frontend, API e bancos. Por padrão, o script preserva os volumes MySQL. Confirme a opção de apagar volumes somente se quiser excluir os dados e inicializar os bancos do zero.
 
-## Telas de concepção
+Execute [`parar-aplicacao.bat`](./parar-aplicacao.bat) para encerrar as duas partes. No Linux ou macOS, a partir da raiz do repositório, encerre os Compose separadamente:
 
-### Tela 1
+```bash
+docker compose -f backend/docker-compose.yml down --remove-orphans
+docker compose -f frontend/docker-compose.yml down --remove-orphans
+```
 
-![Tela 1](tela-1.png)
+Para apagar também os dados persistidos no MySQL e recomeçar com bancos vazios, use `docker compose -f backend/docker-compose.yml down --volumes --remove-orphans`. Essa opção remove permanentemente os volumes do banco. A configuração do frontend não possui volumes persistentes.
 
-### Tela 2
+Os bancos de desenvolvimento e produção usam volumes separados. A aplicação inicia o ambiente de desenvolvimento. As tabelas são criadas pelo script [`init-dev.sql`](./backend/mysql/init-dev.sql) no primeiro início do volume.
 
-![Tela 2](tela-2.png)
-
-### Tela 3
-
-![Tela 3](tela-3.png)
-
-## Contratos principais da API
+### Endpoints principais
 
 - Produtos: `/com/api/produtos` (CRUD).
 - Categorias: `/com/api/categorias` (listagem e cadastro).
 - Fornecedores: `/com/api/fornecedores` (listagem e cadastro).
-- Importação síncrona: `PUT /com/api/fornecedores/importacao` com multipart field `arquivo`. A resposta informa quantos fornecedores foram inseridos e quantos duplicados foram ignorados.
+- Importação: `PUT /com/api/fornecedores/importacao`, multipart field `arquivo`.
 
-As tabelas são criadas pelo script `backend/mysql/init-dev.sql`; o Hibernate não gera o schema automaticamente. No primeiro início, aguarde o MySQL executar o script de inicialização.
+## 6. Repositório GitHub
+
+[tarcizo12/Desenvolvimento-de-aplicacoes-Interativas-com-React-26E4_2-](https://github.com/tarcizo12/Desenvolvimento-de-aplicacoes-Interativas-com-React-26E4_2-)
+
+## 7. Screenshots e demonstração
+
+As telas abaixo foram adicionadas ao repositório como imagens de referência da interface:
+
+### Acesso demonstrativo
+
+![Tela de acesso demonstrativo](./docs/images/Tela_Inicial.png)
+
+### Listagem de produtos
+
+![Tela de produtos](<./docs/images/Tela Produtos.png>)
+
+### Formulário de produto
+
+![Formulário de inclusão de produto](./docs/images/Formulario_Inclusao_Produto.png)
+
+### Categorias
+
+![Tela de categorias](./docs/images/Tela_Categorias.png)
+
+### Fornecedores
+
+![Tela de fornecedores](./docs/images/Tela_Fornecedores.png)
+
+### Modelo de dados
+
+![Diagrama de entidades](./docs/images/diagrama-entidades.png)
+
+## 8. Considerações finais
+
+O desenvolvimento reuniu uma interface React com formulários e navegação, uma API REST com persistência relacional e um processo Docker Compose para facilitar a execução completa. Entre os desafios estiveram alinhar os contratos entre frontend e backend, validar dados antes de persistir e deixar os serviços simples de iniciar em um ambiente de avaliação.
+
+O projeto aplica conceitos de componentes, hooks, Context API, requisições assíncronas com tratamento de erros, rotas protegidas demonstrativas, serviços REST e modelagem com herança. A autenticação real e a proteção de API não fazem parte do escopo atual.
