@@ -141,3 +141,19 @@ As telas abaixo foram adicionadas ao repositório como imagens de referência da
 O desenvolvimento reuniu uma interface React com formulários e navegação, uma API REST com persistência relacional e um processo Docker Compose para facilitar a execução completa. Entre os desafios estiveram alinhar os contratos entre frontend e backend, validar dados antes de persistir e deixar os serviços simples de iniciar em um ambiente de avaliação.
 
 O projeto aplica conceitos de componentes, hooks, Context API, requisições assíncronas com tratamento de erros, rotas protegidas demonstrativas, serviços REST e modelagem com herança. A autenticação real e a proteção de API não fazem parte do escopo atual.
+
+## 9. Créditos
+
+- **ViaCEP:** serviço externo consultado no formulário de cadastro de fornecedores para localizar endereço pelo CEP. A aplicação faz uma requisição `GET` para `https://viacep.com.br/ws/{CEP}/json/`, usando oito dígitos, e trata CEP inexistente e falhas HTTP. Consulte a [documentação oficial do ViaCEP](https://viacep.com.br/).
+- **Correios — Desenvolvedores:** [portal oficial de desenvolvedores dos Correios](https://www.correios.com.br/atendimento/developers), com informações sobre as APIs e integrações oferecidas pelos Correios. A consulta de CEP implementada neste projeto usa o ViaCEP; ela não chama diretamente uma API dos Correios.
+
+### CEPs para testar
+
+Na tela de cadastro de fornecedor, informe um dos CEPs válidos abaixo e selecione **Buscar endereço**:
+
+| CEP | Endereço esperado |
+|---|---|
+| `01001-000` | Praça da Sé, Sé, São Paulo/SP |
+| `20040-020` | Praça Pio X, Centro, Rio de Janeiro/RJ |
+
+O serviço espera oito dígitos; o formulário remove a pontuação antes da consulta. Para conferir diretamente no navegador ou terminal, consulte, por exemplo, [ViaCEP — 01001-000](https://viacep.com.br/ws/01001000/json/) ou [ViaCEP — 20040-020](https://viacep.com.br/ws/20040020/json/). Para testar o tratamento de CEP válido no formato, mas não localizado, use `99999-999`; a API responde com `erro: true`, que deve ser apresentado pela interface como mensagem de CEP não encontrado. Os resultados dependem da disponibilidade e da base atual do serviço externo.
