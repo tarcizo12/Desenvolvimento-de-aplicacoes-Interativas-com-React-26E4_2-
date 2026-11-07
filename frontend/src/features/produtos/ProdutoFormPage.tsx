@@ -1,17 +1,19 @@
-
-import { useEffect, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import Feedback from '../../components/Feedback'
+import useFormFields from '../../hooks/useFormFields'
+import { listarCategorias } from '../categorias/categoriaService'
+import type { Categoria } from '../categorias/type'
+import { listarFornecedores } from '../fornecedores/fornecedorService'
+import type { Fornecedor } from '../fornecedores/type'
 import {
   alterarProduto,
   incluirProduto,
   obterProduto,
 } from './produtoService'
-import type { ProdutoInput, TipoProduto } from './types'
-import { listarCategorias } from '../categorias/categoriaService'
-import type { Categoria } from '../categorias/type'
-import { listarFornecedores } from '../fornecedores/fornecedorService'
-import type { Fornecedor } from '../fornecedores/type'
+import type { Produto, ProdutoInput, TipoProduto } from './types'
 
 interface FormState {
   tipoProduto: TipoProduto
@@ -26,75 +28,102 @@ interface FormState {
   garantiaMeses: string
 }
 
-const estadoInicial: FormState = {
-  tipoProduto: 'PERECIVEL',
-  nome: '',
-  descricao: '',
-  preco: '',
-  quantidadeEstoque: '0',
-  categoriaId: '',
-  fornecedorId: '',
-  dataValidade: '',
-  lote: '',
-  garantiaMeses: '',
-}
+const estadoInicial = (produto?: Produto): FormState => ({
+  tipoProduto: produto?.tipoProduto ?? 'PERECIVEL',
+  nome: produto?.nome ?? '',
+  descricao: produto?.descricao ?? '',
+  preco: produto ? String(produto.preco) : '',
+  quantidadeEstoque: produto ? String(produto.quantidadeEstoque) : '0',
+  categoriaId: produto ? String(produto.categoriaId) : '',
+  fornecedorId: produto ? String(produto.fornecedorId) : '',
+  dataValidade:
+    produto?.tipoProduto === 'PERECIVEL' ? produto.dataValidade : '',
+  lote: produto?.tipoProduto === 'PERECIVEL' ? produto.lote : '',
+  garantiaMeses:
+    produto?.tipoProduto === 'NAO_PERECIVEL'
+      ? String(produto.garantiaMeses)
+      : '',
+})
 
 const ProdutoFormPage = () => {
   const { id } = useParams()
   const editando = id !== undefined
-  const navigate = useNavigate()
+  const produtoId = Number(id)
+  const produtoQuery = useQuery({
+    queryKey: ['produtos', produtoId],
+    queryFn: ({ signal }) => obterProduto(produtoId, signal),
+    enabled: editando && Number.isInteger(produtoId) && produtoId > 0,
+  })
 
-  const [form, setForm] = useState<FormState>(estadoInicial)
-  const [categorias, setCategorias] = useState<Categoria[]>([])
-  const [fornecedores, setFornecedores] = useState<Fornecedor[]>([])
-  const [erro, setErro] = useState('')
-
-  useEffect(() => {
-    listarCategorias().then(setCategorias)
-    listarFornecedores().then(setFornecedores)
-  }, [])
-
-  useEffect(() => {
-    if (id === undefined) return
-
-    obterProduto(Number(id)).then((produto) => {
-      if (!produto) {
-        setErro('Produto não encontrado.')
-        return
-      }
-
-      setForm({
-        tipoProduto: produto.tipoProduto,
-        nome: produto.nome,
-        descricao: produto.descricao ?? '',
-        preco: String(produto.preco),
-        quantidadeEstoque: String(produto.quantidadeEstoque),
-        categoriaId: String(produto.categoriaId),
-        fornecedorId: String(produto.fornecedorId),
-        dataValidade:
-          produto.tipoProduto === 'PERECIVEL'
-            ? produto.dataValidade
-            : '',
-        lote:
-          produto.tipoProduto === 'PERECIVEL'
-            ? produto.lote
-            : '',
-        garantiaMeses:
-          produto.tipoProduto === 'NAO_PERECIVEL'
-            ? String(produto.garantiaMeses)
-            : '',
-      })
-    })
-  }, [id])
-
-  const atualizar = <K extends keyof FormState>(
-    campo: K,
-    valor: FormState[K],
-  ) => {
-    setForm((atual) => ({ ...atual, [campo]: valor }))
+  if (editando && !Number.isInteger(produtoId)) {
+    return <Feedback kind="error" message="Identificador de produto inválido." />
+  }
+  if (editando && produtoQuery.isPending) {
+    return <p className="loading-state">Carregando produto…</p>
+  }
+  if (editando && produtoQuery.isError) {
+    return (
+      <Feedback
+        kind="error"
+        message={`Não foi possível carregar o produto: ${produtoQuery.error.message}`}
+      />
+    )
+  }
+  if (editando && !produtoQuery.data) {
+    return <Feedback kind="error" message="Produto não encontrado." />
   }
 
-  const handleSubmit = async (evento: FormEvent) => {
+  return (
+    <ProdutoEditor
+      key={id ?? 'novo'}
+      produto={produtoQuery.data}
+      editando={editando}
+    />
+  )
+}
+
+const ProdutoEditor = ({
+  produto,
+  editando,
+}: {
+  produto?: Produto
+  editando: boolean
+}) => {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const [erro, setErro] = useState('')
+  const { values: form, updateField: atualizar } =
+    useFormFields<FormState>(estadoInicial(produto))
+  const categoriasQuery = useQuery({
+    queryKey: ['categorias'],
+    queryFn: ({ signal }) => listarCategorias(signal),
+  })
+  const fornecedoresQuery = useQuery({
+    queryKey: ['fornecedores'],
+    queryFn: ({ signal }) => listarFornecedores(signal),
+  })
+  const salvarMutation = useMutation({
+    mutationFn: (dados: ProdutoInput) => {
+      if (editando) {
+        if (!produto) throw new Error('Produto necessário para edição não foi carregado.')
+        return alterarProduto(produto.id, dados)
+      }
+      return incluirProduto(dados)
+    },
+    onSuccess: async (salvo) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['produtos'] }),
+        queryClient.invalidateQueries({ queryKey: ['produtos', salvo.id] }),
+      ])
+      navigate('/produtos')
+    },
+  })
+
+  const categorias: Categoria[] = categoriasQuery.data ?? []
+  const fornecedores: Fornecedor[] = fornecedoresQuery.data ?? []
+  const carregarErro = categoriasQuery.error ?? fornecedoresQuery.error
+
+  const handleSubmit = async (evento: FormEvent<HTMLFormElement>) => {
     evento.preventDefault()
     setErro('')
 
@@ -121,35 +150,61 @@ const ProdutoFormPage = () => {
             garantiaMeses: Number(form.garantiaMeses),
           }
 
-    if (editando) {
-      await alterarProduto(Number(id), dados)
-    } else {
-      await incluirProduto(dados)
+    try {
+      await salvarMutation.mutateAsync(dados)
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : 'Erro ao salvar o produto.')
     }
-
-    navigate('/produtos')
   }
 
   return (
-    <section>
-      <div className="page-title">
-        <h2>{editando ? 'Editar produto' : 'Novo produto'}</h2>
+    <section className="form-page">
+      <div className="page-heading">
+        <div>
+          <p className="eyebrow">Catálogo</p>
+          <h1>{editando ? 'Editar produto' : 'Novo produto'}</h1>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        {erro && <p className="error">{erro}</p>}
+      {erro && <Feedback kind="error" message={erro} />}
+      {carregarErro && (
+        <Feedback
+          kind="error"
+          message={`Não foi possível carregar categorias e fornecedores: ${carregarErro.message}`}
+        />
+      )}
+      {!carregarErro &&
+        (categoriasQuery.isPending || fornecedoresQuery.isPending) && (
+          <Feedback kind="info" message="Carregando categorias e fornecedores…" />
+        )}
+      {!carregarErro &&
+        !categoriasQuery.isPending &&
+        !fornecedoresQuery.isPending &&
+        (categorias.length === 0 || fornecedores.length === 0) && (
+          <Feedback
+            kind="info"
+            message="Cadastre ao menos uma categoria e um fornecedor antes de salvar um produto."
+          />
+        )}
 
+      <form className="form-card" onSubmit={handleSubmit}>
         <label>
           Tipo de produto
           <select
+            disabled={editando}
             value={form.tipoProduto}
-            onChange={(e) =>
-              atualizar('tipoProduto', e.target.value as TipoProduto)
+            onChange={(event) =>
+              atualizar('tipoProduto', event.target.value as TipoProduto)
             }
           >
             <option value="PERECIVEL">Perecível</option>
             <option value="NAO_PERECIVEL">Não perecível</option>
           </select>
+          {editando && (
+            <span className="field-hint">
+              O tipo não pode ser alterado após o cadastro.
+            </span>
+          )}
         </label>
 
         <label>
@@ -159,7 +214,7 @@ const ProdutoFormPage = () => {
             required
             maxLength={150}
             value={form.nome}
-            onChange={(e) => atualizar('nome', e.target.value)}
+            onChange={(event) => atualizar('nome', event.target.value)}
           />
         </label>
 
@@ -169,82 +224,83 @@ const ProdutoFormPage = () => {
             maxLength={255}
             rows={3}
             value={form.descricao}
-            onChange={(e) => atualizar('descricao', e.target.value)}
+            onChange={(event) => atualizar('descricao', event.target.value)}
           />
         </label>
 
-        <label>
-          Preço
-          <input
-            type="number"
-            required
-            min="0"
-            step="0.01"
-            value={form.preco}
-            onChange={(e) => atualizar('preco', e.target.value)}
-          />
-        </label>
+        <div className="form-grid">
+          <label>
+            Preço (R$)
+            <input
+              type="number"
+              required
+              min="0"
+              step="0.01"
+              value={form.preco}
+              onChange={(event) => atualizar('preco', event.target.value)}
+            />
+          </label>
+          <label>
+            Quantidade em estoque
+            <input
+              type="number"
+              required
+              min="0"
+              step="1"
+              value={form.quantidadeEstoque}
+              onChange={(event) =>
+                atualizar('quantidadeEstoque', event.target.value)
+              }
+            />
+          </label>
+        </div>
 
-        <label>
-          Quantidade em estoque
-          <input
-            type="number"
-            required
-            min="0"
-            step="1"
-            value={form.quantidadeEstoque}
-            onChange={(e) =>
-              atualizar('quantidadeEstoque', e.target.value)
-            }
-          />
-        </label>
-
-        <label>
-          Categoria
-          <select
-            required
-            value={form.categoriaId}
-            onChange={(e) => atualizar('categoriaId', e.target.value)}
-          >
-            <option value="">Selecione...</option>
-            {categorias.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nome}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          Fornecedor
-          <select
-            required
-            value={form.fornecedorId}
-            onChange={(e) => atualizar('fornecedorId', e.target.value)}
-          >
-            <option value="">Selecione...</option>
-            {fornecedores.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.nome}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="form-grid">
+          <label>
+            Categoria
+            <select
+              required
+              value={form.categoriaId}
+              onChange={(event) => atualizar('categoriaId', event.target.value)}
+            >
+              <option value="">Selecione…</option>
+              {categorias.map((categoria) => (
+                <option key={categoria.id} value={categoria.id}>
+                  {categoria.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Fornecedor
+            <select
+              required
+              value={form.fornecedorId}
+              onChange={(event) => atualizar('fornecedorId', event.target.value)}
+            >
+              <option value="">Selecione…</option>
+              {fornecedores.map((fornecedor) => (
+                <option key={fornecedor.id} value={fornecedor.id}>
+                  {fornecedor.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
         {form.tipoProduto === 'PERECIVEL' ? (
-          <>
+          <div className="form-grid">
             <label>
               Data de validade
               <input
                 type="date"
                 required
                 value={form.dataValidade}
-                onChange={(e) =>
-                  atualizar('dataValidade', e.target.value)
+                onChange={(event) =>
+                  atualizar('dataValidade', event.target.value)
                 }
               />
             </label>
-
             <label>
               Lote
               <input
@@ -252,10 +308,10 @@ const ProdutoFormPage = () => {
                 required
                 maxLength={50}
                 value={form.lote}
-                onChange={(e) => atualizar('lote', e.target.value)}
+                onChange={(event) => atualizar('lote', event.target.value)}
               />
             </label>
-          </>
+          </div>
         ) : (
           <label>
             Garantia (meses)
@@ -265,17 +321,18 @@ const ProdutoFormPage = () => {
               min="0"
               step="1"
               value={form.garantiaMeses}
-              onChange={(e) =>
-                atualizar('garantiaMeses', e.target.value)
+              onChange={(event) =>
+                atualizar('garantiaMeses', event.target.value)
               }
             />
           </label>
         )}
 
-        <div className="actions">
-          <button type="submit">Salvar</button>
-
-          <Link to="/produtos" className="button secondary">
+        <div className="form-actions">
+          <button type="submit" disabled={salvarMutation.isPending}>
+            {salvarMutation.isPending ? 'Salvando…' : 'Salvar produto'}
+          </button>
+          <Link to="/produtos" className="button button-secondary">
             Cancelar
           </Link>
         </div>

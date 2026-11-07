@@ -26,8 +26,8 @@ exit /b 0
 echo ==========================================================
 echo  RESUMO DOS BANCOS - %date% %time%
 echo ==========================================================
-call :container estoque-mysql-dev root_dev DEV 3306
-call :container estoque-mysql-prod root_prod PROD 3307
+call :container inventory-db-dev root_dev DEV 3306
+call :container inventory-db-prod root_prod PROD 3307
 exit /b 0
 
 
@@ -45,7 +45,6 @@ for /f "usebackq delims=" %%r in (`docker inspect --format "{{.State.Running}}" 
 if not "%running%"=="true" echo [AVISO] Container nao esta rodando. Use subir-banco.bat.
 if not "%running%"=="true" exit /b 0
 call :banco estoque_principal
-call :banco movimentacao_db
 exit /b 0
 
 

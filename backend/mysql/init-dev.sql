@@ -20,7 +20,7 @@ GRANT ALL PRIVILEGES ON estoque_principal.* TO 'estoque_dev'@'%';
 FLUSH PRIVILEGES;
 
 -- ============================================================
--- BANCO: estoque_principal  (aplicacao-principal)
+-- BANCO: estoque_principal  (inventory-api)
 -- ============================================================
 USE estoque_principal;
 

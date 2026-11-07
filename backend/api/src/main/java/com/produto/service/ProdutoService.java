@@ -152,9 +152,9 @@ public class ProdutoService {
                         "Data de validade e lote são obrigatórios para produtos perecíveis");
             }
         } else {
-            if (request.getGarantiaMeses() == null) {
+            if (request.getGarantiaMeses() == null || request.getGarantiaMeses() < 0) {
                 throw new IllegalArgumentException(
-                        "Garantia em meses é obrigatória para produtos não perecíveis");
+                        "Garantia em meses obrigatória e não pode ser negativa para produtos não perecíveis");
             }
         }
     }

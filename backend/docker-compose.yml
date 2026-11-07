@@ -1,7 +1,7 @@
 services:
   mysql-dev:
     image: mysql:8.4
-    container_name: estoque-mysql-dev
+    container_name: inventory-db-dev
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root_dev
@@ -10,10 +10,15 @@ services:
     volumes:
       - mysql-dev-data:/var/lib/mysql
       - ./mysql/init-dev.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   mysql-prod:
     image: mysql:8.4
-    container_name: estoque-mysql-prod
+    container_name: inventory-db-prod
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root_prod
@@ -22,36 +27,28 @@ services:
     volumes:
       - mysql-prod-data:/var/lib/mysql
       - ./mysql/init-prod.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot_prod"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
-  rabbitmq:
-    build: ./rabbitmq
-    container_name: estoque-rabbitmq
-    restart: unless-stopped
-    environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-
-  aplicacao-principal:
-    build: ./aplicacao-principal
-    container_name: estoque-aplicacao-principal
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: inventory-api
     restart: unless-stopped
     depends_on:
-      - mysql-dev
-      - rabbitmq
+      mysql-dev:
+        condition: service_healthy
     environment:
       SERVER_PORT: 8080
       SPRING_PROFILES_ACTIVE: dev
       DB_URL: jdbc:mysql://mysql-dev:3306/estoque_principal?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      DB_USERNAME: root
-      DB_PASSWORD: root_dev
+      DB_USERNAME: estoque_dev
+      DB_PASSWORD: estoque_dev
       JPA_DDL_AUTO: none
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: admin
-      SPRING_RABBITMQ_PASSWORD: admin
     ports:
       - "8080:8080"
 

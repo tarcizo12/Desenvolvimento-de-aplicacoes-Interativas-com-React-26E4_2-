@@ -1,65 +1,105 @@
+import { ApiError, apiDelete, apiGet, apiPost, apiPut } from '../../utils/api'
+import type {
+  Produto,
+  ProdutoApiInput,
+  ProdutoApiResponse,
+  ProdutoInput,
+} from './types'
 
-import type { Produto, ProdutoInput } from './types'
+const endpoint = '/produtos'
 
+const toProduto = (response: ProdutoApiResponse): Produto => {
+  const base = {
+    id: response.idProduto,
+    nome: response.nome,
+    descricao: response.descricao ?? undefined,
+    preco: response.preco,
+    quantidadeEstoque: response.quantidadeEstoque,
+    categoriaId: response.idCategoria,
+    fornecedorId: response.idFornecedor,
+  }
 
-let produtos: Produto[] = [
-  {
-    id: 1,
-    tipoProduto: 'PERECIVEL',
-    nome: 'Leite Integral 1L',
-    descricao: 'Caixa com 12 unidades',
-    preco: 54.9,
-    quantidadeEstoque: 40,
-    categoriaId: 1,
-    fornecedorId: 1,
-    dataValidade: '2026-12-31',
-    lote: 'L2026-10',
-  },
-  {
-    id: 2,
+  if (response.perecivel) {
+    if (!response.dataValidade || !response.lote) {
+      throw new ApiError('A API retornou dados incompletos para um produto perecível.')
+    }
+    return {
+      ...base,
+      tipoProduto: 'PERECIVEL',
+      dataValidade: response.dataValidade,
+      lote: response.lote,
+    }
+  }
+
+  if (typeof response.garantiaMeses !== 'number') {
+    throw new ApiError('A API retornou a garantia ausente para um produto não perecível.')
+  }
+  return {
+    ...base,
     tipoProduto: 'NAO_PERECIVEL',
-    nome: 'Fone de Ouvido Bluetooth',
-    preco: 149.9,
-    quantidadeEstoque: 15,
-    categoriaId: 2,
-    fornecedorId: 2,
-    garantiaMeses: 12,
-  },
-]
+    garantiaMeses: response.garantiaMeses,
+  }
+}
 
-let proximoId = 3
+const toApiInput = (input: ProdutoInput): ProdutoApiInput => {
+  const base = {
+    nome: input.nome,
+    descricao: input.descricao,
+    preco: input.preco,
+    quantidadeEstoque: input.quantidadeEstoque,
+    idCategoria: input.categoriaId,
+    idFornecedor: input.fornecedorId,
+  }
 
-export const listarProdutos = async (): Promise<Produto[]> =>
-  [...produtos].sort((a, b) => a.nome.localeCompare(b.nome))
+  return input.tipoProduto === 'PERECIVEL'
+    ? {
+        ...base,
+        perecivel: true,
+        dataValidade: input.dataValidade,
+        lote: input.lote,
+      }
+    : {
+        ...base,
+        perecivel: false,
+        garantiaMeses: input.garantiaMeses,
+      }
+}
+
+export const listarProdutos = async (
+  signal?: AbortSignal,
+): Promise<Produto[]> => {
+  const respostas = await apiGet<ProdutoApiResponse[]>(endpoint, signal)
+  return respostas.map(toProduto)
+}
 
 export const obterProduto = async (
   id: number,
-): Promise<Produto | undefined> =>
-  produtos.find((p) => p.id === id)
+  signal?: AbortSignal,
+): Promise<Produto> =>
+  toProduto(await apiGet<ProdutoApiResponse>(`${endpoint}/${id}`, signal))
 
 export const incluirProduto = async (
   dados: ProdutoInput,
-): Promise<Produto> => {
-  const novo = { ...dados, id: proximoId++ } as Produto
-
-  produtos = [...produtos, novo]
-
-  return novo
-}
+  signal?: AbortSignal,
+): Promise<Produto> =>
+  toProduto(
+    await apiPost<ProdutoApiResponse>(endpoint, toApiInput(dados), signal),
+  )
 
 export const alterarProduto = async (
   id: number,
   dados: ProdutoInput,
-): Promise<Produto> => {
-  const atualizado = { ...dados, id } as Produto
+  signal?: AbortSignal,
+): Promise<Produto> =>
+  toProduto(
+    await apiPut<ProdutoApiResponse>(
+      `${endpoint}/${id}`,
+      toApiInput(dados),
+      signal,
+    ),
+  )
 
-  produtos = produtos.map((p) => (p.id === id ? atualizado : p))
-
-  return atualizado
-}
-
-export const excluirProduto = async (
+export const excluirProduto = (
   id: number,
-): Promise<void> => {
-  produtos = produtos.filter((p) => p.id !== id)
-}
+  signal?: AbortSignal,
+): Promise<void> => apiDelete(`${endpoint}/${id}`, signal)

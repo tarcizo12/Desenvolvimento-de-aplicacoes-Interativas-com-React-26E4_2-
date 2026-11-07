@@ -1,13 +1,34 @@
-# Gerenciador de Estoque: Front-end React
+# Gerenciador de Estoque
 
-Esta etapa do projeto desenvolve a **interface web em React** do sistema de estoque. Ela dá continuidade ao projeto anterior, em que foram construídos a API em Spring Boot, o banco MySQL e a orquestração com Docker Compose.
+Aplicação de gerenciamento de estoque com API Spring Boot, MySQL e interface React + TypeScript.
 
-## Escopo
+## Executar no Windows
+
+1. Instale Docker Desktop e Node.js 20.19+ (ou 22.12+).
+2. Execute [`iniciar-backend.bat`](./iniciar-backend.bat) e aguarde a mensagem de API pronta.
+3. Execute [`iniciar-frontend.bat`](./iniciar-frontend.bat).
+4. Abra `http://localhost:8082`. O backend fica em `http://localhost:8080`; o Swagger, em `http://localhost:8080/swagger-ui.html`.
+
+O script do backend sobe somente o MySQL de desenvolvimento e a API. A importação de fornecedores CSV é processada diretamente pela API. Os dados do banco ficam nos volumes Docker. O frontend roda localmente com Vite, sem container.
+
+Para encerrar o backend, no diretório `backend`, execute `docker compose down`. Para encerrar o frontend, use `Ctrl+C` na janela do servidor.
+
+## Funcionalidades
 
 Para manter o foco, o escopo foi reduzido ao núcleo do domínio:
 
-- **CRUD de Produto** (foco principal desta etapa): listar, cadastrar, editar e excluir.
-- **Categoria** e **Fornecedor**: entidades de apoio, usadas para classificar e associar cada produto (por exemplo, nos campos de seleção do formulário).
+- **Produtos**: listar, cadastrar, editar e excluir por meio da API persistida.
+- **Categorias**: listar e cadastrar categorias usadas pelos produtos.
+- **Fornecedores**: listar, cadastrar e importar CSV de forma síncrona.
+- **Interface React**: React Router, TanStack Query, Context API para a sessão demonstrativa, formulários controlados e estados de carregamento/erro.
+
+O acesso pelo formulário de entrada é apenas uma demonstração de rota protegida no navegador. **Não é autenticação e não protege os endpoints da API.**
+
+O frontend usa `http://localhost:8080/com/api` como endereço padrão da API. Para outro endereço, crie `frontend/.env.local` com:
+
+```env
+VITE_API_BASE_URL=http://localhost:8080/com/api
+```
 
 
 ## Modelo de domínio
@@ -37,15 +58,11 @@ Pontos principais do modelo:
 
 ![Tela 3](tela-3.png)
 
-## Back-end utilizado
+## Contratos principais da API
 
-A interface consome a API da aplicação principal (projeto da disciplina anterior):
+- Produtos: `/com/api/produtos` (CRUD).
+- Categorias: `/com/api/categorias` (listagem e cadastro).
+- Fornecedores: `/com/api/fornecedores` (listagem e cadastro).
+- Importação síncrona: `PUT /com/api/fornecedores/importacao` com multipart field `arquivo`. A resposta informa quantos fornecedores foram inseridos e quantos duplicados foram ignorados.
 
-- API: `http://localhost:8080`
-- Documentação (Swagger): `http://localhost:8080/swagger-ui.html`
-
-Para subir a API e o banco, na raiz do projeto anterior:
-
-```bash
-docker compose up --build -d
-```
+As tabelas são criadas pelo script `backend/mysql/init-dev.sql`; o Hibernate não gera o schema automaticamente. No primeiro início, aguarde o MySQL executar o script de inicialização.

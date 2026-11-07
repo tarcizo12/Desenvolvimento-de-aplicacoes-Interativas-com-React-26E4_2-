@@ -1,58 +1,75 @@
-
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import Feedback from '../../components/Feedback'
+import useFormFields from '../../hooks/useFormFields'
 import { incluirFornecedor } from './fornecedorService'
+
+interface FornecedorForm {
+  nome: string
+  cnpj: string
+  telefone: string
+  email: string
+  endereco: string
+}
 
 const FornecedorFormPage = () => {
   const navigate = useNavigate()
-  const [nome, setNome] = useState('')
-  const [cnpj, setCnpj] = useState('')
-  const [telefone, setTelefone] = useState('')
-  const [email, setEmail] = useState('')
-  const [endereco, setEndereco] = useState('')
+  const queryClient = useQueryClient()
   const [erro, setErro] = useState('')
+  const { values: form, updateField: atualizar } =
+    useFormFields<FornecedorForm>({
+      nome: '',
+      cnpj: '',
+      telefone: '',
+      email: '',
+      endereco: '',
+    })
+  const salvarMutation = useMutation({
+    mutationFn: (dados: Parameters<typeof incluirFornecedor>[0]) =>
+      incluirFornecedor(dados),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['fornecedores'] })
+      navigate('/fornecedores')
+    },
+  })
 
-  const handleSubmit = async (evento: FormEvent) => {
+  const handleSubmit = async (evento: FormEvent<HTMLFormElement>) => {
     evento.preventDefault()
     setErro('')
-
     try {
-      await incluirFornecedor({
-        nome: nome.trim(),
-        cnpj: cnpj.trim(),
-        telefone: telefone.trim() || undefined,
-        email: email.trim() || undefined,
-        endereco: endereco.trim() || undefined,
+      await salvarMutation.mutateAsync({
+        nome: form.nome.trim(),
+        cnpj: form.cnpj.trim(),
+        telefone: form.telefone.trim() || undefined,
+        email: form.email.trim() || undefined,
+        endereco: form.endereco.trim() || undefined,
       })
-
-      navigate('/fornecedores')
-    } catch (e) {
-      setErro(
-        e instanceof Error
-          ? e.message
-          : 'Erro ao salvar o fornecedor.',
-      )
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : 'Erro ao salvar o fornecedor.')
     }
   }
 
   return (
-    <section>
-      <div className="page-title">
-        <h2>Novo fornecedor</h2>
+    <section className="form-page">
+      <div className="page-heading">
+        <div>
+          <p className="eyebrow">Parceiros</p>
+          <h1>Novo fornecedor</h1>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        {erro && <p className="error">{erro}</p>}
-
+      {erro && <Feedback kind="error" message={erro} />}
+      <form className="form-card" onSubmit={handleSubmit}>
         <label>
           Nome
           <input
             type="text"
             required
             maxLength={150}
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
+            value={form.nome}
+            onChange={(event) => atualizar('nome', event.target.value)}
           />
         </label>
 
@@ -65,45 +82,47 @@ const FornecedorFormPage = () => {
             placeholder="00.000.000/0000-00"
             pattern="\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}"
             title="Use o formato 00.000.000/0000-00"
-            value={cnpj}
-            onChange={(e) => setCnpj(e.target.value)}
+            value={form.cnpj}
+            onChange={(event) => atualizar('cnpj', event.target.value)}
           />
         </label>
 
-        <label>
-          Telefone
-          <input
-            type="tel"
-            maxLength={20}
-            value={telefone}
-            onChange={(e) => setTelefone(e.target.value)}
-          />
-        </label>
-
-        <label>
-          E-mail
-          <input
-            type="email"
-            maxLength={150}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </label>
+        <div className="form-grid">
+          <label>
+            Telefone
+            <input
+              type="tel"
+              maxLength={20}
+              value={form.telefone}
+              onChange={(event) => atualizar('telefone', event.target.value)}
+            />
+          </label>
+          <label>
+            E-mail
+            <input
+              type="email"
+              maxLength={150}
+              value={form.email}
+              onChange={(event) => atualizar('email', event.target.value)}
+            />
+          </label>
+        </div>
 
         <label>
           Endereço
           <input
             type="text"
             maxLength={255}
-            value={endereco}
-            onChange={(e) => setEndereco(e.target.value)}
+            value={form.endereco}
+            onChange={(event) => atualizar('endereco', event.target.value)}
           />
         </label>
 
-        <div className="actions">
-          <button type="submit">Salvar</button>
-
-          <Link to="/fornecedores" className="button secondary">
+        <div className="form-actions">
+          <button type="submit" disabled={salvarMutation.isPending}>
+            {salvarMutation.isPending ? 'Salvando…' : 'Salvar fornecedor'}
+          </button>
+          <Link to="/fornecedores" className="button button-secondary">
             Cancelar
           </Link>
         </div>

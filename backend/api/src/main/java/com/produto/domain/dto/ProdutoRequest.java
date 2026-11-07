@@ -13,7 +13,7 @@ import java.time.LocalDate;
 public class ProdutoRequest {
 
     @NotBlank(message = "Nome é obrigatório")
-    @Size(max = 100, message = "Nome deve ter no máximo 100 caracteres")
+    @Size(max = 150, message = "Nome deve ter no máximo 150 caracteres")
     private String nome;
 
     @Size(max = 255)

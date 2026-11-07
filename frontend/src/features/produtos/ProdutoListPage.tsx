@@ -1,94 +1,101 @@
-
-import { useEffect, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { listarProdutos, excluirProduto } from './produtoService'
+import DataTable from '../../components/DataTable'
+import type { DataTableColumn } from '../../components/DataTable'
+import ConfirmButton from '../../components/ConfirmButton'
+import Feedback from '../../components/Feedback'
 import { formatarMoeda } from '../../utils/format'
+import { excluirProduto, listarProdutos } from './produtoService'
 import type { Produto } from './types'
 
 const ProdutoListPage = () => {
-  const [produtos, setProdutos] = useState<Produto[]>([])
-  const [carregando, setCarregando] = useState(true)
+  const queryClient = useQueryClient()
+  const produtosQuery = useQuery({
+    queryKey: ['produtos'],
+    queryFn: ({ signal }) => listarProdutos(signal),
+  })
+  const excluirMutation = useMutation({
+    mutationFn: (id: number) => excluirProduto(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['produtos'] }),
+  })
 
-  useEffect(() => {
-    listarProdutos().then((dados) => {
-      setProdutos(dados)
-      setCarregando(false)
-    })
-  }, [])
-
-  const handleExcluir = (produto: Produto) => {
-    if (!window.confirm(`Excluir o produto "${produto.nome}"?`)) return
-
-    excluirProduto(produto.id)
-
-    setProdutos((atual) =>
-      atual.filter((p) => p.id !== produto.id),
-    )
-  }
+  const colunas: DataTableColumn<Produto>[] = [
+    { key: 'nome', header: 'Produto', render: (produto) => produto.nome },
+    {
+      key: 'tipo',
+      header: 'Tipo',
+      render: (produto) =>
+        produto.tipoProduto === 'PERECIVEL' ? 'Perecível' : 'Não perecível',
+    },
+    {
+      key: 'preco',
+      header: 'Preço',
+      render: (produto) => formatarMoeda(produto.preco),
+    },
+    {
+      key: 'estoque',
+      header: 'Estoque',
+      render: (produto) => produto.quantidadeEstoque,
+    },
+    {
+      key: 'acoes',
+      header: 'Ações',
+      render: (produto) => (
+        <div className="actions">
+          <Link
+            to={`/produtos/${produto.id}/editar`}
+            className="button button-secondary"
+          >
+            Editar
+          </Link>
+          <ConfirmButton
+            label="Excluir"
+            confirmation={`Excluir o produto "${produto.nome}"?`}
+            disabled={excluirMutation.isPending}
+            onConfirm={() => excluirMutation.mutate(produto.id)}
+          />
+        </div>
+      ),
+    },
+  ]
 
   return (
     <section>
-      <div className="page-title">
-        <h2>Produtos</h2>
-
+      <div className="page-heading">
+        <div>
+          <p className="eyebrow">Catálogo</p>
+          <h1>Produtos</h1>
+          <p className="page-description">Gerencie os itens e níveis de estoque.</p>
+        </div>
         <Link to="/produtos/novo" className="button">
           Novo produto
         </Link>
       </div>
 
-      {carregando ? (
-        <p>Carregando...</p>
-      ) : produtos.length === 0 ? (
-        <p>Nenhum produto cadastrado.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Tipo</th>
-              <th>Preço</th>
-              <th>Estoque</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {produtos.map((produto) => (
-              <tr key={produto.id}>
-                <td>{produto.nome}</td>
-
-                <td>
-                  {produto.tipoProduto === 'PERECIVEL'
-                    ? 'Perecível'
-                    : 'Não perecível'}
-                </td>
-
-                <td>{formatarMoeda(produto.preco)}</td>
-
-                <td>{produto.quantidadeEstoque}</td>
-
-                <td>
-                  <div className="actions">
-                    <Link
-                      to={`/produtos/${produto.id}/editar`}
-                      className="button secondary"
-                    >
-                      Editar
-                    </Link>
-
-                    <button
-                      type="button"
-                      className="danger"
-                      onClick={() => handleExcluir(produto)}
-                    >
-                      Excluir
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {produtosQuery.isPending && <p className="loading-state">Carregando produtos…</p>}
+      {produtosQuery.isError && (
+        <Feedback
+          kind="error"
+          message={`Não foi possível carregar os produtos: ${produtosQuery.error.message}`}
+        />
+      )}
+      {excluirMutation.isError && (
+        <Feedback
+          kind="error"
+          message={`Não foi possível excluir o produto: ${excluirMutation.error.message}`}
+        />
+      )}
+      {!produtosQuery.isPending && !produtosQuery.isError && (
+        produtosQuery.data.length === 0 ? (
+          <div className="empty-state">Nenhum produto cadastrado.</div>
+        ) : (
+          <DataTable
+            caption="Produtos cadastrados"
+            rows={produtosQuery.data}
+            columns={colunas}
+            getRowKey={(produto) => produto.id}
+          />
+        )
       )}
     </section>
   )

@@ -1,8 +1,11 @@
 package com.api.controller;
 
 import com.fornecedor.domain.dto.FornecedorResponse;
+import com.fornecedor.domain.dto.FornecedorCreateRequest;
 import com.fornecedor.service.FornecedorService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,20 +21,24 @@ public class FornecedorController {
 
     private final FornecedorService fornecedorService;
 
-    @Operation(summary = "Realiza a importacao em lote de fornecedores")
+    @PostMapping
+    public ResponseEntity<FornecedorResponse> incluir(
+            @Valid @RequestBody FornecedorCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(fornecedorService.incluir(request));
+    }
+
+    @Operation(summary = "Importa fornecedores de forma síncrona a partir de um CSV")
     @PutMapping(
             value = "/importacao",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    public ResponseEntity<?> importar(
+    public ResponseEntity<String> importar(
             @RequestPart("arquivo") MultipartFile arquivo) {
-        String retornoUsuario = "Csv importado, em alguns instantes a base de dados deve se atualizada, arquivo temporario: " +
-                fornecedorService.salvarArquivoTemporariamente(arquivo);
-        return ResponseEntity.accepted()
-                .body(retornoUsuario);
+        return ResponseEntity.ok(fornecedorService.importarCsv(arquivo));
     }
 
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<List<FornecedorResponse>> listarTodos() {
         return ResponseEntity.ok(fornecedorService.listarTodos());
     }

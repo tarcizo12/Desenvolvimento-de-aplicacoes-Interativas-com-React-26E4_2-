@@ -1,116 +1,143 @@
-
-import { useEffect, useRef, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { listarFornecedores } from './fornecedorService'
+import DataTable from '../../components/DataTable'
+import type { DataTableColumn } from '../../components/DataTable'
+import Feedback from '../../components/Feedback'
+import { importarFornecedoresCsv, listarFornecedores } from './fornecedorService'
 import type { Fornecedor } from './type'
 
 const FornecedorListPage = () => {
-  const [fornecedores, setFornecedores] = useState<Fornecedor[]>([])
-  const [carregando, setCarregando] = useState(true)
+  const queryClient = useQueryClient()
   const [arquivo, setArquivo] = useState<File | null>(null)
+  const [mensagemImportacao, setMensagemImportacao] = useState('')
   const inputArquivoRef = useRef<HTMLInputElement>(null)
+  const fornecedoresQuery = useQuery({
+    queryKey: ['fornecedores'],
+    queryFn: ({ signal }) => listarFornecedores(signal),
+  })
+  const importacaoMutation = useMutation({
+    mutationFn: (selectedFile: File) => importarFornecedoresCsv(selectedFile),
+    onSuccess: async (mensagem) => {
+      setMensagemImportacao(mensagem || 'Importação concluída.')
+      await queryClient.invalidateQueries({ queryKey: ['fornecedores'] })
+    },
+  })
 
-  useEffect(() => {
-    listarFornecedores().then((dados) => {
-      setFornecedores(dados)
-      setCarregando(false)
-    })
-  }, [])
-
-  const handleSelecionarArquivo = (
-    evento: ChangeEvent<HTMLInputElement>,
-  ) => {
-    setArquivo(evento.target.files?.[0] ?? null)
-  }
-
-  const handleLimparArquivo = () => {
-    setArquivo(null)
-
-    if (inputArquivoRef.current) {
-      inputArquivoRef.current.value = ''
-    }
+  const handleSelecionarArquivo = (event: ChangeEvent<HTMLInputElement>) => {
+    setArquivo(event.target.files?.[0] ?? null)
+    setMensagemImportacao('')
   }
 
   const handleEnviarCsv = () => {
+    if (!arquivo) return
+    importacaoMutation.mutate(arquivo)
   }
+
+  const colunas: DataTableColumn<Fornecedor>[] = [
+    { key: 'nome', header: 'Fornecedor', render: (fornecedor) => fornecedor.nome },
+    { key: 'cnpj', header: 'CNPJ', render: (fornecedor) => fornecedor.cnpj },
+    {
+      key: 'telefone',
+      header: 'Telefone',
+      render: (fornecedor) => fornecedor.telefone || '—',
+    },
+    {
+      key: 'email',
+      header: 'E-mail',
+      render: (fornecedor) => fornecedor.email || '—',
+    },
+    {
+      key: 'endereco',
+      header: 'Endereço',
+      render: (fornecedor) => fornecedor.endereco || '—',
+    },
+  ]
 
   return (
     <section>
-      <div className="page-title">
-        <h2>Fornecedores</h2>
-
+      <div className="page-heading">
+        <div>
+          <p className="eyebrow">Parceiros</p>
+          <h1>Fornecedores</h1>
+          <p className="page-description">
+            Consulte e cadastre os parceiros do estoque.
+          </p>
+        </div>
         <div className="actions">
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => inputArquivoRef.current?.click()}
-          >
+          <label className="button button-secondary file-picker">
             Importar CSV
-          </button>
-
+            <input
+              ref={inputArquivoRef}
+              type="file"
+              accept=".csv,text/csv"
+              onChange={handleSelecionarArquivo}
+              aria-label="Selecionar arquivo CSV de fornecedores"
+            />
+          </label>
           <Link to="/fornecedores/novo" className="button">
             Novo fornecedor
           </Link>
         </div>
       </div>
 
-      <input
-        ref={inputArquivoRef}
-        type="file"
-        accept=".csv,text/csv"
-        onChange={handleSelecionarArquivo}
-        hidden
-      />
-
       {arquivo && (
-        <div className="actions" style={{ marginBottom: '1rem' }}>
+        <div className="upload-panel">
           <span>
             Arquivo selecionado: <strong>{arquivo.name}</strong>
           </span>
-
-          <button type="button" onClick={handleEnviarCsv}>
-            Enviar
-          </button>
-
-          <button
-            type="button"
-            className="secondary"
-            onClick={handleLimparArquivo}
-          >
-            Remover
-          </button>
+          <div className="actions">
+            <button
+              type="button"
+              disabled={importacaoMutation.isPending}
+              onClick={handleEnviarCsv}
+            >
+              {importacaoMutation.isPending ? 'Enviando…' : 'Enviar CSV'}
+            </button>
+            <button
+              type="button"
+              className="button button-quiet"
+              onClick={() => {
+                setArquivo(null)
+                if (inputArquivoRef.current) inputArquivoRef.current.value = ''
+              }}
+            >
+              Remover
+            </button>
+          </div>
         </div>
       )}
 
-      {carregando ? (
-        <p>Carregando...</p>
-      ) : fornecedores.length === 0 ? (
-        <p>Nenhum fornecedor cadastrado.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>CNPJ</th>
-              <th>Telefone</th>
-              <th>E-mail</th>
-              <th>Endereço</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {fornecedores.map((fornecedor) => (
-              <tr key={fornecedor.id}>
-                <td>{fornecedor.nome}</td>
-                <td>{fornecedor.cnpj}</td>
-                <td>{fornecedor.telefone ?? '-'}</td>
-                <td>{fornecedor.email ?? '-'}</td>
-                <td>{fornecedor.endereco ?? '-'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {importacaoMutation.isError && (
+        <Feedback
+          kind="error"
+          message={`Não foi possível importar o arquivo: ${importacaoMutation.error.message}`}
+        />
+      )}
+      {mensagemImportacao && (
+        <Feedback kind="success" message={mensagemImportacao} />
+      )}
+      {fornecedoresQuery.isPending && (
+        <p className="loading-state">Carregando fornecedores…</p>
+      )}
+      {fornecedoresQuery.isError && (
+        <Feedback
+          kind="error"
+          message={`Não foi possível carregar os fornecedores: ${fornecedoresQuery.error.message}`}
+        />
+      )}
+      {!fornecedoresQuery.isPending && !fornecedoresQuery.isError && (
+        fornecedoresQuery.data.length === 0 ? (
+          <div className="empty-state">Nenhum fornecedor cadastrado.</div>
+        ) : (
+          <DataTable
+            caption="Fornecedores cadastrados"
+            rows={fornecedoresQuery.data}
+            columns={colunas}
+            getRowKey={(fornecedor) => fornecedor.id}
+          />
+        )
       )}
     </section>
   )

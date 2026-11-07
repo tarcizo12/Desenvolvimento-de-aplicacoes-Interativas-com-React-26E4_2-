@@ -1,28 +1,22 @@
-
+import { apiGet, apiPost, apiUpload } from '../../utils/api'
 import type { Fornecedor, FornecedorInput } from './type'
 
-let fornecedores: Fornecedor[] = [
-  { id: 1, nome: 'Distribuidora Alfa', cnpj: '11.111.111/0001-11' },
-  { id: 2, nome: 'Tech Import', cnpj: '22.222.222/0001-22' },
-]
+const endpoint = '/fornecedores'
 
-let proximoId = 3
+export const listarFornecedores = (
+  signal?: AbortSignal,
+): Promise<Fornecedor[]> => apiGet<Fornecedor[]>(endpoint, signal)
 
-export const listarFornecedores = async (): Promise<Fornecedor[]> =>
-  [...fornecedores].sort((a, b) => a.nome.localeCompare(b.nome))
-
-export const incluirFornecedor = async (
+export const incluirFornecedor = (
   dados: FornecedorInput,
-): Promise<Fornecedor> => {
-  const existe = fornecedores.some((f) => f.cnpj === dados.cnpj)
+  signal?: AbortSignal,
+): Promise<Fornecedor> => apiPost<Fornecedor>(endpoint, dados, signal)
 
-  if (existe) {
-    throw new Error('Já existe um fornecedor com esse CNPJ.')
-  }
-
-  const novo: Fornecedor = { ...dados, id: proximoId++ }
-
-  fornecedores = [...fornecedores, novo]
-
-  return novo
+export const importarFornecedoresCsv = (
+  arquivo: File,
+  signal?: AbortSignal,
+): Promise<string> => {
+  const dados = new FormData()
+  dados.append('arquivo', arquivo)
+  return apiUpload<string>(`${endpoint}/importacao`, dados, signal)
 }

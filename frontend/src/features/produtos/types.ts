@@ -12,7 +12,7 @@ interface ProdutoBase {
 
 export interface ProdutoPerecivel extends ProdutoBase {
   tipoProduto: 'PERECIVEL'
-  dataValidade: string // formato ISO: AAAA-MM-DD
+  dataValidade: string
   lote: string
 }
 
@@ -26,3 +26,32 @@ export type Produto = ProdutoPerecivel | ProdutoNaoPerecivel
 export type ProdutoInput =
   | Omit<ProdutoPerecivel, 'id'>
   | Omit<ProdutoNaoPerecivel, 'id'>
+
+export interface ProdutoApiResponse {
+  idProduto: number
+  nome: string
+  descricao: string | null
+  preco: number
+  quantidadeEstoque: number
+  idCategoria: number
+  nomeCategoria: string
+  idFornecedor: number
+  nomeFornecedor: string
+  perecivel: boolean
+  dataValidade: string | null
+  lote: string | null
+  garantiaMeses: number | null
+}
+
+export interface ProdutoApiInput {
+  nome: string
+  descricao?: string
+  preco: number
+  quantidadeEstoque: number
+  idCategoria: number
+  idFornecedor: number
+  perecivel: boolean
+  dataValidade?: string
+  lote?: string
+  garantiaMeses?: number
+}

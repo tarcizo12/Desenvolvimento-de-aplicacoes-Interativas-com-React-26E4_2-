@@ -6,7 +6,7 @@ echo ==========================================
 echo  RESET TOTAL DOS BANCOS (somente testes)
 echo ==========================================
 echo Isso vai APAGAR containers, volumes (todos os dados) e imagens
-echo do docker-compose (mysql-dev e mysql-prod).
+echo do docker-compose (bancos dev e prod).
 echo.
 set /p confirma=Tem certeza? (S/N): 
 if /i not "%confirma%"=="S" (

@@ -30,20 +30,20 @@ if errorlevel 1 (
 echo.
 echo [2/3] Aguardando os bancos ficarem saudaveis...
 
-call :aguardar estoque-mysql-dev
+call :aguardar inventory-db-dev
 if errorlevel 1 goto :falha
 
-call :aguardar estoque-mysql-prod
+call :aguardar inventory-db-prod
 if errorlevel 1 goto :falha
 
 echo.
 echo [3/3] Garantindo bancos e usuarios...
 
-docker exec -i estoque-mysql-dev mysql -uroot -proot_dev < mysql\init-dev.sql 2>nul
+docker exec -i inventory-db-dev mysql -uroot -proot_dev < mysql\init-dev.sql 2>nul
 
 if errorlevel 1 goto :falha
 
-docker exec -i estoque-mysql-prod mysql -uroot -proot_prod < mysql\init-prod.sql 2>nul
+docker exec -i inventory-db-prod mysql -uroot -proot_prod < mysql\init-prod.sql 2>nul
 
 if errorlevel 1 goto :falha
 
@@ -55,12 +55,10 @@ echo.
 echo DEV :
 echo   MySQL: localhost:3306
 echo   Banco: estoque_principal
-echo   Banco: movimentacao_db
 echo.
 echo PROD:
 echo   MySQL: localhost:3307
 echo   Banco: estoque_principal
-echo   Banco: movimentacao_db
 echo.
 echo Bancos, usuarios e tabelas garantidos
 echo via mysql\init-*.sql.

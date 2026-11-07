@@ -1,6 +1,6 @@
 # Front-end: React + TypeScript + Vite
 
-Interface web do Gerenciador de Estoque, construída com React, TypeScript e Vite.
+Interface do Gerenciador de Estoque, construída com React, TypeScript, Vite, React Router, TanStack Query e componentes de tabela/feedback do Material UI.
 
 ## Pré-requisito
 
@@ -19,7 +19,19 @@ npm install
 npm run dev
 ```
 
-A aplicação abre em `http://localhost:8082`.
+A aplicação abre em `http://localhost:8082` e consome a API em
+`http://localhost:8080/com/api`. Inicie o backend antes de usar as páginas.
+O endereço da API pode ser alterado em `frontend/.env.local`:
+
+```env
+VITE_API_BASE_URL=http://localhost:8080/com/api
+```
+
+O acesso inicial é uma rota protegida demonstrativa por nome de sessão no
+navegador; não representa autenticação e não protege a API.
+
+Na raiz do repositório, os scripts [`iniciar-backend.bat`](../iniciar-backend.bat)
+e [`iniciar-frontend.bat`](../iniciar-frontend.bat) iniciam cada parte na ordem.
 
 ## Comandos disponíveis
 
