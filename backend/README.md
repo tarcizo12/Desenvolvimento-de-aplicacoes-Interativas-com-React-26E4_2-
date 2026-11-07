@@ -58,4 +58,4 @@ A importação CSV é síncrona. O arquivo deve conter as colunas `nome,cnpj,tel
 - `mysql/init-dev.sql` e `mysql/init-prod.sql`: inicialização dos schemas.
 - `api/src/test`: testes automatizados.
 
-Para executar em containers, o backend e o banco usam `backend/docker-compose.yml`; o frontend tem configuração independente em `frontend/docker-compose.yml`. Os scripts da raiz e os comandos para cada parte estão descritos no README principal.
+Para executar em containers, o backend e o banco usam `backend/docker-compose.yml`; o frontend tem configuração independente em `frontend/docker-compose.yml`. Os scripts de automação estão organizados em `scripts/windows/` e `scripts/linux/`; instruções de uso estão no README principal.

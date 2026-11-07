@@ -1,6 +1,6 @@
 @echo off
 setlocal
-pushd "%~dp0backend"
+pushd "%~dp0..\..\backend"
 
 echo ==========================================
 echo  Iniciando o backend do Gerenciador Estoque
@@ -10,7 +10,7 @@ where docker >nul 2>&1
 if errorlevel 1 (
     echo [ERRO] Docker nao foi encontrado no PATH.
     popd
-    pause
+    if not defined SKIP_SCRIPT_PAUSE pause
     exit /b 1
 )
 
@@ -18,7 +18,7 @@ docker info >nul 2>&1
 if errorlevel 1 (
     echo [ERRO] Inicie o Docker Desktop e tente novamente.
     popd
-    pause
+    if not defined SKIP_SCRIPT_PAUSE pause
     exit /b 1
 )
 
@@ -27,7 +27,7 @@ docker compose up --build --remove-orphans -d api
 if errorlevel 1 (
     echo [ERRO] Nao foi possivel iniciar o backend.
     popd
-    pause
+    if not defined SKIP_SCRIPT_PAUSE pause
     exit /b 1
 )
 
@@ -41,12 +41,12 @@ for /L %%i in (1,1,60) do (
 echo [AVISO] Os containers iniciaram, mas a API ainda nao respondeu.
 echo Consulte os logs com: docker compose logs -f api
 popd
-pause
+if not defined SKIP_SCRIPT_PAUSE pause
 exit /b 1
 
 :api_pronta
 echo Backend pronto: http://localhost:8080
 echo Swagger: http://localhost:8080/swagger-ui.html
 popd
-pause
+if not defined SKIP_SCRIPT_PAUSE pause
 exit /b 0

@@ -1,6 +1,6 @@
 @echo off
 setlocal
-pushd "%~dp0frontend"
+pushd "%~dp0..\..\frontend"
 
 echo ==========================================
 echo  Iniciando o frontend em container Docker
@@ -10,7 +10,7 @@ where docker >nul 2>&1
 if errorlevel 1 (
     echo [ERRO] Docker nao foi encontrado no PATH.
     popd
-    pause
+    if not defined SKIP_SCRIPT_PAUSE pause
     exit /b 1
 )
 
@@ -18,7 +18,7 @@ docker info >nul 2>&1
 if errorlevel 1 (
     echo [ERRO] Inicie o Docker Desktop e tente novamente.
     popd
-    pause
+    if not defined SKIP_SCRIPT_PAUSE pause
     exit /b 1
 )
 
@@ -28,7 +28,7 @@ if errorlevel 1 (
     echo [ERRO] Nao foi possivel iniciar o frontend.
     echo Consulte os logs com: docker compose logs -f
     popd
-    pause
+    if not defined SKIP_SCRIPT_PAUSE pause
     exit /b 1
 )
 
@@ -42,12 +42,12 @@ for /L %%i in (1,1,45) do (
 echo [AVISO] O container iniciou, mas o frontend ainda nao respondeu.
 echo Consulte os logs com: docker compose logs -f frontend
 popd
-pause
+if not defined SKIP_SCRIPT_PAUSE pause
 exit /b 1
 
 :frontend_pronto
 echo Frontend pronto: http://localhost:8082
 start "" "http://localhost:8082"
 popd
-pause
+if not defined SKIP_SCRIPT_PAUSE pause
 exit /b 0

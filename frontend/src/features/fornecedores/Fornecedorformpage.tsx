@@ -4,6 +4,7 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Feedback from '../../components/Feedback'
 import useFormFields from '../../hooks/useFormFields'
+import { buscarEnderecoPorCep } from './cepService'
 import { incluirFornecedor } from './fornecedorService'
 
 interface FornecedorForm {
@@ -18,6 +19,7 @@ const FornecedorFormPage = () => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [erro, setErro] = useState('')
+  const [cep, setCep] = useState('')
   const { values: form, updateField: atualizar } =
     useFormFields<FornecedorForm>({
       nome: '',
@@ -26,6 +28,22 @@ const FornecedorFormPage = () => {
       email: '',
       endereco: '',
     })
+  const consultaCepMutation = useMutation({
+      mutationFn: (codigoPostal: string) =>
+        queryClient.fetchQuery({
+          queryKey: ['cep', codigoPostal],
+          queryFn: () => buscarEnderecoPorCep(codigoPostal),
+          staleTime: 5 * 60 * 1000,
+        }),
+    onSuccess: (endereco) => {
+      const partes = [
+        endereco.logradouro,
+        endereco.bairro,
+        `${endereco.localidade}/${endereco.uf}`,
+      ].filter(Boolean)
+      atualizar('endereco', partes.join(', '))
+    },
+  })
   const salvarMutation = useMutation({
     mutationFn: (dados: Parameters<typeof incluirFornecedor>[0]) =>
       incluirFornecedor(dados),
@@ -61,6 +79,12 @@ const FornecedorFormPage = () => {
       </div>
 
       {erro && <Feedback kind="error" message={erro} />}
+      {consultaCepMutation.isError && (
+        <Feedback
+          kind="error"
+          message={`Não foi possível consultar o CEP: ${consultaCepMutation.error.message}`}
+        />
+      )}
       <form className="form-card" onSubmit={handleSubmit}>
         <label>
           Nome
@@ -109,6 +133,30 @@ const FornecedorFormPage = () => {
         </div>
 
         <label>
+          CEP
+          <div className="form-grid">
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="postal-code"
+              maxLength={9}
+              placeholder="00000-000"
+              aria-label="CEP para consulta de endereço"
+              value={cep}
+              onChange={(event) => setCep(event.target.value)}
+            />
+            <button
+              type="button"
+              className="button button-secondary"
+              disabled={cep.replace(/\D/g, '').length !== 8 || consultaCepMutation.isPending}
+              onClick={() => consultaCepMutation.mutate(cep.replace(/\D/g, ''))}
+            >
+              {consultaCepMutation.isPending ? 'Consultando…' : 'Buscar endereço'}
+            </button>
+          </div>
+        </label>
+
+        <label>
           Endereço
           <input
             type="text"
@@ -117,6 +165,9 @@ const FornecedorFormPage = () => {
             onChange={(event) => atualizar('endereco', event.target.value)}
           />
         </label>
+        {consultaCepMutation.isSuccess && (
+          <p role="status">Endereço preenchido pela consulta ViaCEP.</p>
+        )}
 
         <div className="form-actions">
           <button type="submit" disabled={salvarMutation.isPending}>

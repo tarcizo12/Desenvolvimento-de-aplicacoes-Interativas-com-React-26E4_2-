@@ -13,7 +13,9 @@ O projeto oferece uma interface para manter um catálogo de produtos e suas info
 - **Produtos:** listar, cadastrar, editar e excluir produtos. O modelo diferencia produtos perecíveis (validade e lote) e não perecíveis (meses de garantia).
 - **Categorias:** listar e cadastrar categorias para classificar os produtos.
 - **Fornecedores:** listar e cadastrar fornecedores, além de importar CSV de forma síncrona. A resposta da API informa quantos registros foram criados e quantos duplicados foram ignorados.
+- **Consulta externa de CEP:** o formulário de fornecedor usa Fetch API e ViaCEP para preencher o endereço, tratando estados de consulta e erros.
 - **Interface reativa:** formulários controlados, tabelas, confirmação de exclusão e estados visíveis de carregamento, sucesso e erro.
+- **Estado global:** Redux Toolkit armazena a sessão demonstrativa; TanStack Query mantém cache e sincroniza dados da API REST.
 - **Navegação:** páginas distintas com React Router. O acesso inicial por nome é uma proteção demonstrativa do frontend, não uma autenticação.
 - **Persistência e validação:** API REST em Spring Boot, regras de domínio e persistência relacional em MySQL.
 
@@ -21,17 +23,21 @@ O projeto oferece uma interface para manter um catálogo de produtos e suas info
 
 ## 4. Tecnologias utilizadas
 
-- **Frontend:** React 19, TypeScript, Vite, React Router, TanStack Query, Material UI, Fetch API e CSS.
+- **Frontend:** React 18, TypeScript, Create React App, React Router, Redux Toolkit, TanStack Query, Material UI, Fetch API e CSS.
 - **Backend:** Java 21, Spring Boot, Spring Web, Spring Validation, Spring Data JPA, OpenFeign e Springdoc OpenAPI.
 - **Dados:** MySQL 8.4.
 - **Ambiente conteinerizado:** Docker, Docker Compose, Node.js 22 e Nginx para servir o build estático do frontend.
-- **Testes:** JUnit 5, Mockito e Spring Boot Test.
+- **Testes:** Jest, JUnit 5, Mockito e Spring Boot Test.
 
 ## 5. Instruções de execução
 
+### Preparação e verificação dos critérios React
+
+O frontend usa Create React App. Para conferir a estrutura, Redux, integração externa e uma checagem manual em navegadores diferentes, consulte os exemplos e comandos em [`frontend/README.md`](./frontend/README.md). Os testes automatizados do frontend usam apenas Jest, incluído no Create React App.
+
 ### Requisitos
 
-- Docker instalado e em execução. No Windows, use o Docker Desktop; no Linux, Docker Engine e o plugin Docker Compose; no macOS, Docker Desktop.
+- Docker instalado e em execução. No Windows, use o Docker Desktop; no Linux, Docker Engine e o plugin Docker Compose; no macOS, Docker Desktop. Os scripts `.sh` também requerem Bash e `curl`.
 - Git, para clonar o repositório.
 - Não é necessário instalar Node.js ou Java no computador para a execução via scripts Docker. Para desenvolvimento local sem Docker, veja os READMEs de [backend](./backend/README.md) e [frontend](./frontend/README.md).
 
@@ -45,43 +51,49 @@ O projeto oferece uma interface para manter um catálogo de produtos e suas info
    ```
 
 2. Inicie o Docker Desktop e aguarde até que ele esteja pronto.
-3. Execute [`iniciar-backend.bat`](./iniciar-backend.bat). O script constrói e inicia a API e o MySQL de desenvolvimento.
-4. Execute [`iniciar-frontend.bat`](./iniciar-frontend.bat). O script constrói a imagem React/Nginx, inicia somente o frontend e abre o navegador.
-5. Acesse:
+3. Para iniciar tudo de uma vez, execute [`scripts/iniciar-tudo.bat`](./scripts/iniciar-tudo.bat). Ele inicia o backend e o banco, aguarda a API responder e depois inicia o frontend. Se preferir, execute separadamente [`iniciar-backend.bat`](./scripts/windows/iniciar-backend.bat) e [`iniciar-frontend.bat`](./scripts/windows/iniciar-frontend.bat).
+4. Acesse:
    - Aplicação: [http://localhost:8082](http://localhost:8082)
    - API: [http://localhost:8080](http://localhost:8080)
    - Swagger: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
 
-Cada parte possui sua própria configuração Compose: [`backend/docker-compose.yml`](./backend/docker-compose.yml) para API e bancos, e [`frontend/docker-compose.yml`](./frontend/docker-compose.yml) para a interface. Assim, é possível construir, iniciar ou atualizar uma parte sem recriar a outra. A primeira execução baixa as imagens-base e compila as aplicações, podendo levar alguns minutos. O frontend é servido em um container Nginx e chama a API em `http://localhost:8080/com/api`. Para usar outro endereço, defina `VITE_API_BASE_URL` antes de construir a imagem; essa variável é aplicada no build do frontend.
+Cada parte possui sua própria configuração Compose: [`backend/docker-compose.yml`](./backend/docker-compose.yml) para API e bancos, e [`frontend/docker-compose.yml`](./frontend/docker-compose.yml) para a interface. Assim, é possível construir, iniciar ou atualizar uma parte sem recriar a outra. A primeira execução baixa as imagens-base e compila as aplicações, podendo levar alguns minutos. O frontend é servido em um container Nginx e chama a API em `http://localhost:8080/com/api`. Para usar outro endereço, defina `REACT_APP_API_BASE_URL` antes de construir a imagem; essa variável é aplicada no build do frontend.
 
 ### Linux e macOS
 
-Em sistemas sem suporte a arquivos `.bat`, execute os comandos Docker Compose separadamente, a partir da raiz do repositório. Inicie API e banco:
+Os scripts multiplataforma estão organizados por sistema na pasta [`scripts/`](./scripts/): `scripts/windows/` contém os arquivos `.bat` e `scripts/linux/` contém os equivalentes `.sh`. Os scripts localizam a raiz do projeto automaticamente, portanto podem ser executados a partir de qualquer diretório.
+
+No Linux, a partir da raiz do repositório, torne os scripts executáveis uma vez:
 
 ```bash
-docker compose -f backend/docker-compose.yml up --build -d api
+chmod +x scripts/*.sh scripts/linux/*.sh
 ```
 
-O banco de desenvolvimento é iniciado automaticamente como dependência da API. Em seguida, construa e inicie somente o frontend:
+Depois execute o script combinado para subir backend/banco e frontend em sequência:
 
 ```bash
-docker compose -f frontend/docker-compose.yml up --build -d
+./scripts/iniciar-tudo.sh
 ```
 
-O frontend pode iniciar independentemente, mas as operações de dados precisam da API em execução. Acompanhe os logs de cada parte com `docker compose -f backend/docker-compose.yml logs -f` ou `docker compose -f frontend/docker-compose.yml logs -f`. A aplicação fica disponível em `http://localhost:8082`.
+O banco de desenvolvimento é iniciado automaticamente como dependência da API. O frontend também pode ser iniciado sozinho, mas precisa da API para operações de dados. Os scripts imprimem os endereços quando os serviços respondem: interface em `http://localhost:8082`, API em `http://localhost:8080`.
+
+O script combinado reutiliza as rotinas em `scripts/linux/` e para caso o backend não inicie. Para subir cada parte separadamente, execute `./scripts/linux/iniciar-backend.sh` e depois `./scripts/linux/iniciar-frontend.sh`.
+
+No macOS, os mesmos comandos `.sh` funcionam se o Docker Desktop e o shell Bash estiverem disponíveis. Como alternativa, se o checkout não preservar a permissão de execução, invoque cada script com `bash`, por exemplo `bash scripts/linux/iniciar-backend.sh`.
+
+Para acompanhar logs manualmente, use `docker compose logs -f` dentro de `backend/` ou `frontend/`, conforme o serviço.
 
 ### Encerrar ou recomeçar
 
-Execute [`parar-aplicacao.bat`](./parar-aplicacao.bat) para encerrar frontend, API e bancos. Por padrão, o script preserva os volumes MySQL. Confirme a opção de apagar volumes somente se quiser excluir os dados e inicializar os bancos do zero.
+No Windows, execute [`parar-aplicacao.bat`](./scripts/windows/parar-aplicacao.bat) para encerrar frontend, API e bancos. Por padrão, o script preserva os volumes MySQL. Confirme a opção de apagar volumes somente se quiser excluir os dados e inicializar os bancos do zero.
 
-Execute [`parar-aplicacao.bat`](./parar-aplicacao.bat) para encerrar as duas partes. No Linux ou macOS, a partir da raiz do repositório, encerre os Compose separadamente:
+No Linux ou macOS, execute o script equivalente:
 
 ```bash
-docker compose -f backend/docker-compose.yml down --remove-orphans
-docker compose -f frontend/docker-compose.yml down --remove-orphans
+./scripts/linux/parar-aplicacao.sh
 ```
 
-Para apagar também os dados persistidos no MySQL e recomeçar com bancos vazios, use `docker compose -f backend/docker-compose.yml down --volumes --remove-orphans`. Essa opção remove permanentemente os volumes do banco. A configuração do frontend não possui volumes persistentes.
+O script pergunta se deseja apagar os volumes do banco. Responda `n` (ou apenas pressione Enter) para preservá-los; responda `s` apenas se quiser excluir permanentemente os dados e reiniciar com bancos vazios.
 
 Os bancos de desenvolvimento e produção usam volumes separados. A aplicação inicia o ambiente de desenvolvimento. As tabelas são criadas pelo script [`init-dev.sql`](./backend/mysql/init-dev.sql) no primeiro início do volume.
 

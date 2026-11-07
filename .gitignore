@@ -208,6 +208,7 @@ $RECYCLE.BIN/
 !.env.example
 !.env.sample
 !.env.template
+!/frontend/.env
 
 # Chaves e certificados privados
 *.pem

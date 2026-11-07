@@ -1,8 +1,15 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import useAuth from '../auth/useAuth'
+import { loggedOut } from '../store/authSlice'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
 
 const Layout = () => {
-  const { displayName, logout } = useAuth()
+  const dispatch = useAppDispatch()
+  const displayName = useAppSelector((state) => state.auth.displayName)
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('estoque-demo-user')
+    dispatch(loggedOut())
+  }
 
   return (
     <>
@@ -21,7 +28,7 @@ const Layout = () => {
 
           <div className="account-menu">
             <span className="account-name">{displayName}</span>
-            <button type="button" className="button button-quiet" onClick={logout}>
+            <button type="button" className="button button-quiet" onClick={handleLogout}>
               Sair
             </button>
           </div>

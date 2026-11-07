@@ -1,7 +1,7 @@
 @echo off
 setlocal
 set "hadError=0"
-pushd "%~dp0backend"
+pushd "%~dp0..\..\backend"
 
 echo ==========================================
 echo  Encerrando os servicos da aplicacao
@@ -28,7 +28,7 @@ if errorlevel 1 (
 )
 
 popd
-pushd "%~dp0frontend"
+pushd "%~dp0..\..\frontend"
 echo.
 echo Encerrando o frontend...
 docker compose down --remove-orphans

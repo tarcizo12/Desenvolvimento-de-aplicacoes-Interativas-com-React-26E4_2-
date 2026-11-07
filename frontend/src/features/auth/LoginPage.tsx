@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
-import useAuth from '../../auth/useAuth'
+import { loggedIn } from '../../store/authSlice'
+import { useAppDispatch, useAppSelector } from '../../store/hooks'
 
 const LoginPage = () => {
   const [nome, setNome] = useState('')
-  const { authenticated, login } = useAuth()
+  const dispatch = useAppDispatch()
+  const authenticated = useAppSelector((state) => state.auth.displayName.length > 0)
   const location = useLocation()
   const navigate = useNavigate()
   const origem = (location.state as { from?: { pathname?: string } } | null)
@@ -15,7 +17,9 @@ const LoginPage = () => {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    login(nome)
+    const nomeNormalizado = nome.trim()
+    sessionStorage.setItem('estoque-demo-user', nomeNormalizado)
+    dispatch(loggedIn(nomeNormalizado))
     navigate(origem, { replace: true })
   }
 
